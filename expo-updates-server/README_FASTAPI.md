@@ -119,13 +119,96 @@ curl "http://localhost:8000/api/assets?asset=updates/test/1/bundles/ios-xxx.js&r
 
 For production, use a production ASGI server configuration:
 
-```bash
-# With Gunicorn + Uvicorn workers
-gunicorn fastapi_app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+### Option 1: Gunicorn with Uvicorn workers (Recommended)
 
-# Or with just Uvicorn
+```bash
+# Install gunicorn
+pip install gunicorn
+
+# Run with multiple workers
+gunicorn fastapi_app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+```
+
+### Option 2: Uvicorn alone
+
+```bash
+# Run with multiple workers
 uvicorn fastapi_app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
+
+### Option 3: Docker
+
+Create a `Dockerfile`:
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY fastapi_app fastapi_app/
+COPY updates updates/
+COPY code-signing-keys code-signing-keys/
+COPY .env.fastapi .env.fastapi
+
+ENV HOSTNAME=http://localhost:8000
+ENV PRIVATE_KEY_PATH=code-signing-keys/private-key.pem
+
+EXPOSE 8000
+
+CMD ["uvicorn", "fastapi_app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+Build and run:
+
+```bash
+docker build -t expo-updates-server .
+docker run -p 8000:8000 expo-updates-server
+```
+
+### Environment Variables for Production
+
+Make sure to set these environment variables:
+
+- `HOSTNAME`: Your server's public URL (e.g., `https://updates.example.com`)
+- `PRIVATE_KEY_PATH`: Path to your RSA private key for code signing
+
+### Using Nginx as Reverse Proxy
+
+Example Nginx configuration:
+
+```nginx
+server {
+    listen 80;
+    server_name updates.example.com;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+## Testing
+
+Run the test suite:
+
+```bash
+./test_fastapi.sh
+```
+
+This will validate all endpoints including:
+- Health check
+- Root endpoint
+- Manifest endpoint (iOS and Android)
+- Code signing
+- Assets endpoint
+- Rollback directive
 
 ## Troubleshooting
 
