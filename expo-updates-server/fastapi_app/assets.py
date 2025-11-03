@@ -45,8 +45,15 @@ async def assets_endpoint(
     metadata = await get_metadata_async(update_bundle_path, runtimeVersion)
     metadata_json = metadata['metadataJson']
     
-    # Resolve asset path
+    # Resolve and validate asset path - prevent path traversal
     asset_path = pathlib.Path(asset).resolve()
+    base_updates_path = pathlib.Path('updates').resolve()
+    
+    # Security: Ensure the asset path is within the updates directory
+    try:
+        asset_path.relative_to(base_updates_path)
+    except ValueError:
+        raise HTTPException(status_code=400, detail='Invalid asset path')
     
     # Check if it's a launch asset
     is_launch_asset = (
@@ -65,7 +72,7 @@ async def assets_endpoint(
     
     # Check if asset exists
     if not asset_path.exists():
-        raise HTTPException(status_code=404, detail=f'Asset "{asset}" does not exist.')
+        raise HTTPException(status_code=404, detail=f'Asset does not exist.')
     
     # Determine content type
     if is_launch_asset:

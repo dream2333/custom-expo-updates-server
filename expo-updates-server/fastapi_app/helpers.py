@@ -112,9 +112,21 @@ async def get_asset_metadata_async(
     platform: str
 ) -> Dict[str, Any]:
     """Get metadata for an asset."""
+    # Security: validate that file_path doesn't contain path traversal
+    if '..' in file_path or file_path.startswith('/'):
+        raise ValueError('Invalid file path')
+    
     asset_file_path = pathlib.Path(update_bundle_path) / file_path
     
-    with open(asset_file_path, 'rb') as f:
+    # Security: ensure the resolved path is within the update bundle directory
+    update_bundle_resolved = pathlib.Path(update_bundle_path).resolve()
+    asset_file_resolved = asset_file_path.resolve()
+    try:
+        asset_file_resolved.relative_to(update_bundle_resolved)
+    except ValueError:
+        raise ValueError('Invalid asset path')
+    
+    with open(asset_file_resolved, 'rb') as f:
         asset_data = f.read()
     
     asset_hash = get_base64_url_encoding(create_hash(asset_data, 'sha256', 'base64'))
