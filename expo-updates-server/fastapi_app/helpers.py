@@ -146,7 +146,8 @@ async def create_rollback_directive_async(update_bundle_path: str) -> Dict[str, 
         raise ValueError('No rollback found')
     
     stat = rollback_file_path.stat()
-    commit_time = datetime.fromtimestamp(stat.st_birthtime if hasattr(stat, 'st_birthtime') else stat.st_ctime)
+    # Use mtime for better cross-platform compatibility
+    commit_time = datetime.fromtimestamp(stat.st_mtime)
     
     return {
         'type': 'rollBackToEmbedded',
@@ -175,7 +176,8 @@ async def get_metadata_async(update_bundle_path: str, runtime_version: str) -> D
     
     metadata_json = json.loads(metadata_buffer.decode('utf-8'))
     stat = metadata_path.stat()
-    created_at = datetime.fromtimestamp(stat.st_birthtime if hasattr(stat, 'st_birthtime') else stat.st_ctime)
+    # Use mtime for better cross-platform compatibility
+    created_at = datetime.fromtimestamp(stat.st_mtime)
     update_id = create_hash(metadata_buffer, 'sha256', 'hex')
     
     return {

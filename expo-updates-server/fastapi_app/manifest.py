@@ -44,7 +44,7 @@ def create_multipart_response(parts: list) -> bytes:
     content = io.BytesIO()
     
     for part_name, part_data, part_headers in parts:
-        content.write(f"------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n".encode())
+        content.write(f"--{boundary}\r\n".encode())
         content.write(f'Content-Disposition: form-data; name="{part_name}"\r\n'.encode())
         
         for header_name, header_value in part_headers.items():
@@ -54,9 +54,9 @@ def create_multipart_response(parts: list) -> bytes:
         content.write(part_data.encode() if isinstance(part_data, str) else part_data)
         content.write(b"\r\n")
     
-    content.write(b"------WebKitFormBoundary7MA4YWxkTrZu0gW--\r\n")
+    content.write(f"--{boundary}--\r\n".encode())
     
-    return content.getvalue()
+    return content.getvalue(), boundary
 
 
 async def put_update_in_response_async(
@@ -155,11 +155,11 @@ async def put_update_in_response_async(
     parts.append(('extensions', json.dumps({'assetRequestHeaders': asset_request_headers}), 
                   {'content-type': 'application/json'}))
     
-    multipart_content = create_multipart_response(parts)
+    multipart_content, boundary = create_multipart_response(parts)
     
     return Response(
         content=multipart_content,
-        media_type='multipart/mixed; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW',
+        media_type=f'multipart/mixed; boundary={boundary}',
         headers={
             'expo-protocol-version': str(protocol_version),
             'expo-sfv-version': '0',
@@ -216,11 +216,11 @@ async def put_rollback_in_response_async(
     
     parts.append(('directive', json.dumps(directive), directive_headers))
     
-    multipart_content = create_multipart_response(parts)
+    multipart_content, boundary = create_multipart_response(parts)
     
     return Response(
         content=multipart_content,
-        media_type='multipart/mixed; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW',
+        media_type=f'multipart/mixed; boundary={boundary}',
         headers={
             'expo-protocol-version': '1',
             'expo-sfv-version': '0',
@@ -271,11 +271,11 @@ async def put_no_update_available_in_response_async(
     
     parts.append(('directive', json.dumps(directive), directive_headers))
     
-    multipart_content = create_multipart_response(parts)
+    multipart_content, boundary = create_multipart_response(parts)
     
     return Response(
         content=multipart_content,
-        media_type='multipart/mixed; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW',
+        media_type=f'multipart/mixed; boundary={boundary}',
         headers={
             'expo-protocol-version': '1',
             'expo-sfv-version': '0',

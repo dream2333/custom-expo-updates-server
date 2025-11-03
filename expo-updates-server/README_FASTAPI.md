@@ -12,7 +12,7 @@ pip install -r requirements.txt
 
 ### 2. Configure Environment
 
-The server uses environment variables for configuration. You can set them in `.env.local`:
+The server uses environment variables for configuration. You can set them in `.env.fastapi`:
 
 ```
 HOSTNAME=http://localhost:8000
