@@ -4,8 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "PRIVATE_KEY_PATH=code-signing-keys/private-key.pem next dev --turbopack",
-    "dev:fastapi": "./run_fastapi.sh",
-    "test:fastapi": "./test_fastapi.sh",
     "build": "next build",
     "start": "PRIVATE_KEY_PATH=code-signing-keys/private-key.pem next start",
     "lint": "eslint common pages",
