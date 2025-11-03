@@ -5,11 +5,20 @@ This repo contains a server and client that implement the [Expo Updates protocol
 > [!IMPORTANT]
 > This repo exists to provide a basic demonstration of how the protocol might be translated to code. It is not guaranteed to be complete, stable, or performant enough to use as a full-fledged backend for expo-updates. Expo does not provide hands-on technical support for custom expo-updates server implementations, including what is in this repo. Issues within the expo-updates client library itself (independent of server) may be reported at https://github.com/expo/expo/issues/new/choose. Any pull requests that add new features to this repository will likely be closed; instead, feel free to fork the repository to add new features.
 
+## Server Implementations
+
+This repository now includes **two server implementations**:
+
+1. **Next.js (Original)** - TypeScript/Next.js implementation
+2. **FastAPI (New)** - Python/FastAPI implementation
+
+Both implementations provide the same functionality and implement the Expo Updates protocol specification.
+
 ## Why
 
 Expo provides a set of service named EAS (Expo Application Services), one of which is EAS Update which can host and serve updates for an Expo app using the [`expo-updates`](https://github.com/expo/expo/tree/main/packages/expo-updates) library.
 
-In some cases more control of how updates are sent to an app may be needed, and one option is to implement a custom updates server that adheres to the specification in order to serve update manifests and assets. This repo contains an example server implementation of the specification and a client app configured to use the example server.
+In some cases more control of how updates are sent to an app may be needed, and one option is to implement a custom updates server that adheres to the specification in order to serve update manifests and assets. This repo contains example server implementations of the specification and a client app configured to use the example server.
 
 ## Getting started
 
@@ -34,8 +43,32 @@ The flow for creating an update is as follows:
 
 ## The setup
 
-Note: The app is configured to load updates from the server running at http://localhost:3000. If you prefer to load them from a different base URL (for example, in an Android emulator):
-1. Update `.env.local` in the server.
+### Choosing a Server Implementation
+
+#### FastAPI (Python) - Recommended for quick start
+
+The FastAPI server is ready to use out-of-the-box with minimal configuration:
+
+```bash
+cd expo-updates-server
+pip install -r requirements.txt
+./run_fastapi.sh
+```
+
+The server runs on `http://localhost:8000` by default. See [README_FASTAPI.md](expo-updates-server/README_FASTAPI.md) for details.
+
+#### Next.js (TypeScript) - Original implementation
+
+```bash
+cd expo-updates-server
+yarn install
+yarn dev
+```
+
+The server runs on `http://localhost:3000` by default.
+
+Note: The app is configured to load updates from the server. If you prefer to load them from a different base URL (for example, in an Android emulator):
+1. Update `.env.local` (Next.js) or `.env.fastapi` (FastAPI) in the server.
 2. Update `updates.url` in `app.json` and re-run the build steps below.
 
 ### Create a "release" app
@@ -58,12 +91,24 @@ Once you've made a change you're happy with, inside of **/expo-updates-server**,
 
 ### Send an update
 
-Now we're ready to run the update server. Run `yarn dev` in the server folder of this repo to start the server.
+#### With FastAPI
+
+Run `./run_fastapi.sh` in the server folder. The server will start on port 8000.
+
+#### With Next.js
+
+Run `yarn dev` in the server folder of this repo to start the server on port 3000.
 
 In the simulator running the "release" version of the app, force close the app and re-open it. It should make a request to /api/manifest, then requests to /api/assets. After the app loads, it should show any changes you made locally.
 
-## About this server
+## About the servers
 
-This server was created with NextJS. You can find the API endpoints in **pages/api/manifest.js** and **pages/api/assets.js**.
+### Next.js Server
+
+This server was created with NextJS. You can find the API endpoints in **pages/api/manifest.ts** and **pages/api/assets.ts**.
+
+### FastAPI Server
+
+This server was created with FastAPI (Python). You can find the API endpoints in **fastapi_app/manifest.py** and **fastapi_app/assets.py**. See [README_FASTAPI.md](expo-updates-server/README_FASTAPI.md) for more details.
 
 The code signing keys and certificates were generated using https://github.com/expo/code-signing-certificates.
